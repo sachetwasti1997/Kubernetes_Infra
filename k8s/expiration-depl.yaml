@@ -1,0 +1,30 @@
+apiVersion: apps/v1 #tells kubernetes about the poll of objects that we want to draw from
+kind: Deployment #this is the type of object that we want to create from that poll
+metadata: #Config options
+  name: expiration-depl #when deployment is created give it name auth-depl
+spec: # specify how the deployment is going to behave
+  replicas: 1
+  selector: 
+    matchLabels: #the deployment manages all the pods that are having label app auth
+      app: expiration
+  template: #exact configuration of the pods that we want the deployment to create
+    metadata:
+      labels:
+        app: expiration
+    spec:
+      containers:
+        - name: expiration
+          image: sachetwasti61/expiration
+          env: 
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: NATS_URL
+              value: 'http://nats-srv:4222'
+            - name: NATS_CLUSTER_ID
+              value: ticketing
+            - name: REDIS_HOST
+              value: expiration-redis-srv
+              
