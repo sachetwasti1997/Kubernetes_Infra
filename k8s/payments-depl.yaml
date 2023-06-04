@@ -1,0 +1,47 @@
+apiVersion: apps/v1 #tells kubernetes about the poll of objects that we want to draw from
+kind: Deployment #this is the type of object that we want to create from that poll
+metadata: #Config options
+  name: payments-depl #when deployment is created give it name auth-depl
+spec: # specify how the deployment is going to behave
+  replicas: 1
+  selector: 
+    matchLabels: #the deployment manages all the pods that are having label app auth
+      app: payments
+  template: #exact configuration of the pods that we want the deployment to create
+    metadata:
+      labels:
+        app: payments
+    spec:
+      containers:
+        - name: payments
+          image: sachetwasti61/payments
+          env: 
+            - name: NATS_URL
+              value: 'http://nats-srv:4222'
+            - name: NATS_CLUSTER_ID
+              value: ticketing
+            - name: MONGO_URI
+              value: 'mongodb://payments-mongo-srv:27017/payments'
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: STRIPE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-secret
+                  key: STRIPE_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-srv
+spec:
+  selector:
+    app: payments
+  ports:
+    - name: payments
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
